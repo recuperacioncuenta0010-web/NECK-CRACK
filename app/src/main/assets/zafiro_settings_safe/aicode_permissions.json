@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash",
+      "terminal",
+      "writeFile",
+      "editFile",
+      "readFile",
+      "list",
+      "search"
+    ],
+    "deny": []
+  }
+}
