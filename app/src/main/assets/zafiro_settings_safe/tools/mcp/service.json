@@ -1,0 +1,27 @@
+{
+  "enabled": false,
+  "port": 8791,
+  "host": "127.0.0.1",
+  "bearerToken": "",
+  "exposedTools": [
+    "screen_operation",
+    "open",
+    "screens",
+    "screenshot",
+    "find_installed_apps",
+    "load_skill",
+    "notify",
+    "view_image",
+    "memory",
+    "py_web_search",
+    "py_web_read",
+    "py_install_apk",
+    "py_download_file",
+    "py_launch_wechat",
+    "py_meta_tools",
+    "execute_python",
+    "ssh",
+    "shell"
+  ],
+  "keepScreenOn": true
+}
