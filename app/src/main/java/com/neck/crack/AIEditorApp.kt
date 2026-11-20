@@ -278,6 +278,10 @@ class AIEditorApp : Application(), Configuration.Provider {
         appScope.launch {
             ContainerInstaller.extractAgents(this@AIEditorApp)
         }
+        // NECK CRACK: install built-in skills (browser-use, phone-use, termux, python tools).
+        appScope.launch {
+            ContainerInstaller.extractSkills(this@AIEditorApp)
+        }
         // 启动即把旧 Room git 凭据一次性迁移到 git-credentials 文件（真源已迁到文件，删表由迁移器完成）。
         appScope.launch {
             legacyCredentialMigrator.migrateIfNeeded()
