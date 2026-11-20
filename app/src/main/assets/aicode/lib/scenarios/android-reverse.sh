@@ -11,7 +11,7 @@ install_scenario_android_reverse() {
     pkg_add curl wget unzip tar xz zip unzip which file || return 1
     case "$PMGR" in
         apk)
-            pkg_add openjdk17-jdk openjdk17-jdk-headless clang llvm make cmake ninja python3 py3-pip || return 1
+            pkg_add openjdk17-jdk clang llvm make cmake ninja python3 py3-pip || return 1
             ;;
         apt)
             pkg_add "$(apt_jdk_pkg)" clang llvm make cmake ninja-build python3 python3-pip || return 1
