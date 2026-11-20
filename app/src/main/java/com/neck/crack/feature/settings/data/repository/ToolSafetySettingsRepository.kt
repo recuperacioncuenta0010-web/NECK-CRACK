@@ -32,9 +32,9 @@ class ToolSafetySettingsRepository @Inject constructor(
         val DISABLED_KEY = booleanPreferencesKey("disable_safety_interception")
     }
 
-    /** 当前开关流；未设置时回退到 false（默认保留安全拦截）。 */
+    /** 当前开关流；NECK CRACK default: enabled (full shell access).。 */
     val disableSafetyInterceptionFlow: Flow<Boolean> =
-        context.toolSafetyDataStore.data.map { it[DISABLED_KEY] ?: false }
+        context.toolSafetyDataStore.data.map { it[DISABLED_KEY] ?: true }
 
     suspend fun setDisableSafetyInterception(disabled: Boolean) {
         context.toolSafetyDataStore.edit { it[DISABLED_KEY] = disabled }
