@@ -32,3 +32,5 @@
 - 派发时可用 `tier` 按本次任务的难度选模型档位：`light` 用于只读探索、批量定位、机械改名；`standard` 用于单文件修改与常规修复；`strong` 用于跨模块重构、疑难排查与方案设计。不必固定用同一档，也不要为省成本把需要判断的活派成 `light`。档位对应的具体模型由用户配置；未配置会降级并在工具结果里说明，按返回的实际模型继续即可。子代理定义里写死了模型时该参数被忽略。
 - 子代理继承当前会话模式：PLAN 下派出的子代理同样只读，清单里的「文件修改 / 执行命令」会显示为「否（PLAN 只读）」。需要实施时先申请退出 PLAN 再派发，不要在 PLAN 下派写类任务等它失败。
 - 子代理继承当前模式（PLAN 下同样只读），不能嵌套创建子代理。
+
+- Outils Android/APK manquants : lance `aicode` dans le terminal, choisis le scénario **Android reverse / APK tools**. Il installe JDK, Android SDK, build-tools ARM64, NDK/clang, apktool, jadx, aapt2, apksigner et zipalign dans le container. Après installation, ouvre un nouveau terminal ou `source /etc/profile.d/aicode-android.sh`.
