@@ -89,6 +89,44 @@ class ContainerInstaller @Inject constructor(
         }
 
         /**
+         * NECK CRACK: extract built-in skills from assets/skills to ~/.aicode/skills.
+         * Existing files are preserved so user edits and custom skills are not overwritten.
+         */
+        fun extractSkills(context: Context) {
+            val destDir = File(File(context.filesDir, "aicode"), "skills")
+            destDir.mkdirs()
+            runCatching {
+                val entries = context.assets.list("skills") ?: return
+                for (entry in entries) {
+                    val dest = File(destDir, entry)
+                    if (!dest.exists()) {
+                        copyAssetPathRecursive(context, "skills/$entry", dest)
+                    }
+                }
+            }.onFailure {
+                FileLogger.w(TAG, "提取内置技能失败: ${it.message}", it)
+            }
+        }
+
+        private fun copyAssetPathRecursive(context: Context, assetPath: String, dest: File) {
+            try {
+                context.assets.open(assetPath).use { input ->
+                    dest.parentFile?.mkdirs()
+                    dest.outputStream().use { output -> input.copyTo(output) }
+                }
+                if (dest.name.startsWith("py_") || dest.name.endsWith(".sh")) {
+                    dest.setExecutable(true, false)
+                }
+            } catch (e: IOException) {
+                val children = context.assets.list(assetPath) ?: return
+                dest.mkdirs()
+                for (child in children) {
+                    copyAssetPathRecursive(context, "$assetPath/$child", File(dest, child))
+                }
+            }
+        }
+
+        /**
          * 从 assets 提取内置子代理定义（如 Explore）到 ~/.aicode/agents/。
          * 若文件已存在则不覆盖，以保留用户的修改与删除后的重建选择。
          */
