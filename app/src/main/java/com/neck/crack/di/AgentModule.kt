@@ -395,6 +395,8 @@ object AgentModule {
             register("manageMcp", manageMcpTool)
             register("websearch", webSearchTool)
             register("webfetch", webFetchTool)
+            register("py_web_search", webSearchTool)
+            register("py_web_read", webFetchTool)
             register("planMode", planModeTool)
             register("goalStatus", goalStatusTool)
             register("todo", todoTool)
