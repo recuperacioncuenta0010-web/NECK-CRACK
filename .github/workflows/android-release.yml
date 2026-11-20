@@ -33,11 +33,6 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          # 复用 Gradle 构建缓存，加速后续构建。
-          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
 
       # 打印当前 Tag，Tag 驱动直接生成 versionName。
       # 仅打 tag 触发时校验；workflow_dispatch（手动，无 tag）跳过。
