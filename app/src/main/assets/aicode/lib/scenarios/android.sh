@@ -12,7 +12,12 @@ install_scenario_android() {
     fi
     echo ""
     echo "安装 JDK 与基础工具..."
-    pkg_add "$(apt_jdk_pkg)" curl wget unzip || return 1
+    if [ "$PMGR" = "apt" ]; then
+        JDK_PKG="$(apt_jdk_pkg)"
+    else
+        JDK_PKG="openjdk17-jdk"
+    fi
+    pkg_add "$JDK_PKG" curl wget unzip || return 1
     install_android_sdk "36" "35.0.0" || return 1
     install_android_tools_arm64 || true
     write_android_profile
