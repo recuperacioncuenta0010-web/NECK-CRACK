@@ -82,6 +82,110 @@ EOF
         fi
     fi
 
+    # DEX tooling: dex2jar, baksmali/smali, enjarify, dumpdex, unpack detectors.
+    D2J_VER="2.4"
+    D2J_DIR="$TOOLS/dex-tools-$D2J_VER"
+    echo "Téléchargement dex2jar $D2J_VER..."
+    D2J_ZIP="$HOME/.aicode-cache/dex-tools-$D2J_VER.zip"
+    mkdir -p "$HOME/.aicode-cache"
+    if [ ! -x "$D2J_DIR/d2j-dex2jar.sh" ]; then
+        curl -fL --retry 3 -o "$D2J_ZIP" "https://github.com/pxb1988/dex2jar/releases/download/v$D2J_VER/dex-tools-$D2J_VER.zip" \
+        || curl -fL --retry 3 -o "$D2J_ZIP" "https://gh-proxy.com/https://github.com/pxb1988/dex2jar/releases/download/v$D2J_VER/dex-tools-$D2J_VER.zip" \
+        || echo "${C_YELLOW}dex2jar download failed.${C_RESET}"
+        if [ -f "$D2J_ZIP" ]; then
+            rm -rf "$D2J_DIR"
+            unzip -q "$D2J_ZIP" -d "$TOOLS" || true
+        fi
+    fi
+    if [ -x "$D2J_DIR/d2j-dex2jar.sh" ]; then
+        chmod +x "$D2J_DIR"/*.sh 2>/dev/null || true
+        for t in d2j-dex2jar d2j-dex2smali d2j-baksmali d2j-smali; do
+            cat > "$BIN/$t" <<EOF
+#!/bin/sh
+exec sh "$D2J_DIR/$t.sh" "\$@"
+EOF
+            chmod +x "$BIN/$t"
+        done
+    fi
+
+    SMALI_VER="2.5.2"
+    BAKSMALI_JAR="$TOOLS/baksmali-$SMALI_VER.jar"
+    SMALI_JAR="$TOOLS/smali-$SMALI_VER.jar"
+    if [ ! -f "$BAKSMALI_JAR" ]; then
+        echo "Téléchargement baksmali/smali..."
+        curl -fL --retry 3 -o "$BAKSMALI_JAR" "https://repo1.maven.org/maven2/org/smali/baksmali/$SMALI_VER/baksmali-$SMALI_VER.jar" || true
+        curl -fL --retry 3 -o "$SMALI_JAR" "https://repo1.maven.org/maven2/org/smali/smali/$SMALI_VER/smali-$SMALI_VER.jar" || true
+    fi
+    if [ -f "$BAKSMALI_JAR" ]; then
+        cat > "$BIN/baksmali" <<EOF
+#!/bin/sh
+exec java -jar "$BAKSMALI_JAR" "\$@"
+EOF
+        chmod +x "$BIN/baksmali"
+    fi
+    if [ -f "$SMALI_JAR" ]; then
+        cat > "$BIN/smali" <<EOF
+#!/bin/sh
+exec java -jar "$SMALI_JAR" "\$@"
+EOF
+        chmod +x "$BIN/smali"
+    fi
+
+    if [ ! -x "$BIN/enjarify" ]; then
+        echo "Téléchargement enjarify..."
+        ENJ_ZIP="$HOME/.aicode-cache/enjarify-master.zip"
+        curl -fL --retry 3 -o "$ENJ_ZIP" "https://github.com/google/enjarify/archive/refs/heads/master.zip" || true
+        if [ -f "$ENJ_ZIP" ]; then
+            rm -rf "$TOOLS/enjarify-master"
+            unzip -q "$ENJ_ZIP" -d "$TOOLS" || true
+            if [ -f "$TOOLS/enjarify-master/enjarify.sh" ]; then
+                chmod +x "$TOOLS/enjarify-master/enjarify.sh"
+                cat > "$BIN/enjarify" <<EOF
+#!/bin/sh
+exec sh "$TOOLS/enjarify-master/enjarify.sh" "\$@"
+EOF
+                chmod +x "$BIN/enjarify"
+            fi
+        fi
+    fi
+
+    cat > "$BIN/dumpdex" <<'EOF'
+#!/bin/sh
+if [ -z "$1" ] || [ ! -f "$1" ]; then
+  echo "Usage: dumpdex <apk|zip|jar|dex> [output_dir]" >&2
+  exit 1
+fi
+SRC="$1"
+OUT="${2:-dex_out_$(basename "$SRC")}"
+mkdir -p "$OUT"
+case "$SRC" in
+  *.dex|*.odex|*.dey) cp -f "$SRC" "$OUT/" ;;
+  *) unzip -q -o "$SRC" -d "$OUT" 'classes*.dex' '*.dex' '*.odex' '*.dey' 'assets/*.dex' 'assets/*/*.dex' 'files/*.dex' 'files/*/*.dex' 2>/dev/null || true ;;
+esac
+find "$OUT" -type f \( -name '*.dex' -o -name '*.odex' -o -name '*.dey' \) -print
+EOF
+    chmod +x "$BIN/dumpdex"
+
+    cat > "$BIN/apk-unpack-detect" <<'EOF'
+#!/bin/sh
+if [ -z "$1" ] || [ ! -f "$1" ]; then
+  echo "Usage: apk-unpack-detect <apk>" >&2
+  exit 1
+fi
+APK="$1"
+WORK="${2:-unpacked_$(basename "$APK" .apk)}"
+mkdir -p "$WORK"
+unzip -q -o "$APK" -d "$WORK" || exit 1
+echo "== Packer indicators =="
+grep -RaoE 'libjiagu|jiagu|360|ijiami|libsecexe|libsecmain|libshella|libDexHelper|bangcle|secneo|legu|epic|tencent' "$WORK" 2>/dev/null | sort -u | head -40 || true
+echo "== DEX candidates =="
+find "$WORK" -type f \( -name '*.dex' -o -name '*.odex' -o -name '*.dey' \) -print | head -80
+echo "== Suspicious assets/files =="
+find "$WORK/assets" "$WORK/files" -type f 2>/dev/null | head -80 || true
+echo "Suggestion: dumpdex \"$APK\" \"$WORK/dex\"; then baksmali d <file.dex> -o smali_out"
+EOF
+    chmod +x "$BIN/apk-unpack-detect"
+
     # Wrappers Android build tools.
     for t in aapt aapt2 apksigner zipalign dx d8 dexdump; do
         p="$(find "$SDK/build-tools" -type f -name "$t" 2>/dev/null | head -1)"
@@ -111,6 +215,10 @@ EOF
     echo "${C_GREEN}Outils Android reverse installés.${C_RESET}"
     echo "  apktool : $BIN/apktool"
     echo "  jadx    : $BIN/jadx"
+    echo "  dex2jar : $BIN/d2j-dex2jar (si disponible)"
+    echo "  baksmali: $BIN/baksmali (si disponible)"
+    echo "  dumpdex : $BIN/dumpdex"
+    echo "  unpack  : $BIN/apk-unpack-detect"
     echo "  aapt2   : $BIN/aapt2"
     echo "  apksigner: $BIN/apksigner"
     echo "  zipalign: $BIN/zipalign"
