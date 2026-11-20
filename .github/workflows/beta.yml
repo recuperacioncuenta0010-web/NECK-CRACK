@@ -5,22 +5,7 @@ name: Beta Build
 # 产物上传到 Actions Artifacts（默认保留 90 天），不进 GitHub Release。
 # 打 v* tag 的正式发版走 android-release.yml；合入前门禁走 ci.yml。
 on:
-  push:
-    branches: [ main ]
-    # 纯文档/资源改动不影响 APK，跳过省时间（与 ci.yml 保持一致）。
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - 'docs-site/**'
-      - 'LICENSE'
-      - '.gitignore'
-  # 允许在 Actions 页面手动触发，便于验证链路。
   workflow_dispatch:
-
-# 同分支新提交到来时取消正在跑的旧 beta 构建，省额度。
-concurrency:
-  group: beta-${{ github.ref }}
-  cancel-in-progress: true
 
 jobs:
   build:
@@ -41,10 +26,6 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
 
       # beta 用正式签名：从 Secret 还原 keystore 到 app/aicode.jks，并生成 keystore.properties，
       # 与 android-release.yml 完全一致；缺任一步 beta 包会变成 unsigned。
