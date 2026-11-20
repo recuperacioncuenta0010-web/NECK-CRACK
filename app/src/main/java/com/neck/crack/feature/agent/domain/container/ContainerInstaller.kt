@@ -89,6 +89,24 @@ class ContainerInstaller @Inject constructor(
         }
 
         /**
+         * NECK CRACK: install default tool permissions (full shell access) if none exist.
+         * Existing user rules are preserved.
+         */
+        fun extractDefaultPermissions(context: Context) {
+            val destDir = File(context.filesDir, "aicode")
+            destDir.mkdirs()
+            val dest = File(destDir, "permissions.json")
+            if (dest.exists()) return
+            runCatching {
+                context.assets.open("aicode/permissions.json").use { input ->
+                    dest.outputStream().use { output -> input.copyTo(output) }
+                }
+            }.onFailure {
+                FileLogger.w(TAG, "Failed to install default permissions: ${it.message}", it)
+            }
+        }
+
+        /**
          * NECK CRACK: extract built-in skills from assets/skills to ~/.aicode/skills.
          * Existing files are preserved so user edits and custom skills are not overwritten.
          */
