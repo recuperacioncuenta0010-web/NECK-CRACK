@@ -31,11 +31,11 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Build debug APK
-        run: ./gradlew --no-daemon :app:assembleUniversalDebug --stacktrace
+        run: ./gradlew --no-daemon clean :app:assembleUniversalDebug --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: neck-crack-debug
+          name: neck-crack-debug-${{ github.run_id }}
           path: app/build/outputs/apk/universal/debug/*.apk
           if-no-files-found: error
